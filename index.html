@@ -630,7 +630,7 @@
   // ---------------------------------------------------------------
   // DATA — única fuente de verdad. No editable desde la interfaz.
   // ---------------------------------------------------------------
-  const PROJECTS = [
+  let PROJECTS = [
     {
       id: "alerta-coe",
       nombre: "Alerta COE",
@@ -1230,6 +1230,38 @@
     }
   ];
 
+  const API_URL = "https://proyectos-lid-api.lissetteapachecofdez.workers.dev/api/projects";
+
+async function loadProjectsFromAPI() {
+  try {
+    const response = await fetch(API_URL);
+
+    if (!response.ok) {
+      throw new Error(`API respondió con estado ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (
+      data.success === true &&
+      Array.isArray(data.projects) &&
+      data.projects.length > 0
+    ) {
+      PROJECTS = data.projects;
+      console.info(`Proyectos LID: ${PROJECTS.length} proyectos cargados desde D1.`);
+      return true;
+    }
+
+    throw new Error("La API no devolvió una lista válida de proyectos.");
+  } catch (error) {
+    console.warn(
+      "No fue posible cargar los proyectos desde D1. Se utilizarán los datos de respaldo.",
+      error
+    );
+    return false;
+  }
+}
+
   const ACTIVE_STATES = ["Planificación", "Diseño", "Desarrollo", "Implementación"];
   const ALL_STATES = ["Planificación", "Diseño", "Desarrollo", "Implementación", "Operación", "Finalizado"];
 
@@ -1453,9 +1485,14 @@
   // ---------------------------------------------------------------
   // Init
   // ---------------------------------------------------------------
+ async function init() {
+  await loadProjectsFromAPI();
   renderStats();
   renderFilters();
   renderCards();
+}
+
+init();
 </script>
 
 </body>
